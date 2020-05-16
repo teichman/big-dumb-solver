@@ -46,6 +46,10 @@ string Objective::status(const string& prefix) const
   return oss.str();
 }
 
+/* Unfortunately resolution is a key sticking point.
+ * Sometimes resolution of 10 just doesn't find the right answer.
+ * But sometimes higher resolution is just too slow.
+ */
 class BigDumbSolver
 {
 public:
@@ -172,8 +176,8 @@ void BigDumbSolver::buildGrid(const VectorXd& lower, const VectorXd& upper, int 
   for (int i = 0; i < obj_.dimension(); ++i) 
     increment_every[i] = pow(resolution, i);
 
-  cout << "indices: " << indices.transpose() << endl;
-  cout << "increment_every: " << increment_every.transpose() << endl;
+  // cout << "indices: " << indices.transpose() << endl;
+  // cout << "increment_every: " << increment_every.transpose() << endl;
 
   for (size_t i = 0; i < grid.size(); ++i) {
     for (int j = 0; j < obj_.dimension(); ++j)
@@ -247,7 +251,7 @@ public:
     val += fabs(-sqrt(2.0) * a + 2.0 * (sqrt(2.0) * r_ + r0 + r_));
     val += fabs(-a + r0 + 2 * r0 * cos(alpha) + (sqrt(2.0) * r_ + r_ + r0) / sqrt(2.0));  // horiz
     val += fabs(-a + 2 * r0 + 4 * r0 * cos(alpha));  // horiz2.  redundant
-    //val += fabs(-a + p1y_ + p1x_ * tan(alpha) + 2.0 * r0 / cos(alpha));  // vert
+    val += fabs(-a + p1y_ + p1x_ * tan(alpha) + 2.0 * r0 / cos(alpha));  // vert
     
     return val;
   }
@@ -275,9 +279,9 @@ public:
   VectorXd boundsUpper() const
   {
     VectorXd upper(4);
-    upper[0] = 100.0;
-    upper[1] = 100.0;
-    upper[2] = 100.0;
+    upper[0] = 10.0;
+    upper[1] = 10.0;
+    upper[2] = 10.0;
     upper[3] = 2.0 * M_PI;
     return upper;
   }
@@ -304,7 +308,7 @@ public:
     const double& alpha = vars[2];
 
     double val = 0;
-    
+
     val += fabs(r*r + h*h - 36.0);
     val += fabs(h / r - 2.0 * h / 6.0);
     val += fabs(cos(alpha) - r / 6.0);
@@ -346,11 +350,11 @@ private:
 int main(int argc, char** argv)
 {
   // ExampleObjective obj;
-  //CShearer20200502Obj obj;
-  CShearer20200508Obj obj;
+  CShearer20200502Obj obj;
+  //CShearer20200508Obj obj;
   cout << obj.status() << endl;
   
-  BigDumbSolver bds(obj, 30, 0.9);
+  BigDumbSolver bds(obj, 30, 0.8);
   bds.solve();
   return 0;
 }
