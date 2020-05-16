@@ -115,10 +115,26 @@ VectorXd BigDumbSolver::solve()
     VectorXd range = upper - lower;
     range *= scale_factor_;
     lower = best_pt - (range / 2.0);
-    lower = lower.cwiseMax(obj_.boundsLower());
+    //lower = lower.cwiseMax(obj_.boundsLower());
     upper = best_pt + (range / 2.0);
-    upper = upper.cwiseMin(obj_.boundsUpper());
+    //upper = upper.cwiseMin(obj_.boundsUpper());
 
+    // If we've gone out of bounds, shift back.
+    for (int i = 0; i < lower.rows(); ++i) {
+      if (lower[i] < obj_.boundsLower()[i]) {
+        double shift = obj_.boundsLower()[i] - lower[i];
+        lower[i] += shift;
+        upper[i] += shift;
+        assert(upper[i] < obj_.boundsUpper()[i]);
+      }
+      else if (upper[i] > obj_.boundsUpper()[i]) {
+        double shift = upper[i] - obj_.boundsUpper()[i];
+        lower[i] -= shift;
+        upper[i] -= shift;
+        assert(lower[i] > obj_.boundsLower()[i]);
+      }
+    }
+    
     iter++;
   }
 
@@ -205,6 +221,7 @@ class ExampleObjective : public Objective
 };
 
 
+// https://twitter.com/Cshearer41/status/1256489376881795073
 class CShearer20200502Obj : public Objective
 {
 public:
@@ -326,18 +343,14 @@ private:
 };
 
 
-
-
 int main(int argc, char** argv)
 {
   // ExampleObjective obj;
-  // cout << obj.status() << endl;
-
   //CShearer20200502Obj obj;
   CShearer20200508Obj obj;
   cout << obj.status() << endl;
   
-  BigDumbSolver bds(obj, 100);
+  BigDumbSolver bds(obj, 30, 0.9);
   bds.solve();
   return 0;
 }
