@@ -226,11 +226,11 @@ class ExampleObjective : public Objective
 
 
 // https://twitter.com/Cshearer41/status/1256489376881795073
-class CShearer20200502Obj : public Objective
+class CShearer20200502 : public Objective
 {
 public:
 
-  CShearer20200502Obj()
+  CShearer20200502()
   {
     r_ = sqrt(12.0 / M_PI);
     p1x_ = r_ * (sqrt(2.0) + 2.0) / 2.0;
@@ -293,11 +293,11 @@ private:
 };
 
 // https://twitter.com/Cshearer41/status/1258681340570013698
-class CShearer20200508Obj : public Objective
+class CShearer20200508 : public Objective
 {
 public:
 
-  CShearer20200508Obj()
+  CShearer20200508()
   {
   }
   
@@ -347,11 +347,56 @@ private:
 };
 
 
+
+// https://twitter.com/Cshearer41/status/1259087361645969409
+class CShearer20200509 : public Objective
+{
+public:
+
+  CShearer20200509()
+  {
+  }
+  
+  double operator()(const VectorXd& vars) const
+  {
+    const double& alpha = vars[0];
+    
+    double val = 0;
+    val += fabs(-2.0 * sin(alpha) + 3.0 * sin(alpha) - 2.0 * cos(alpha));
+    return val;
+  }
+
+  string reportBest(const VectorXd& best, const string& prefix = "") const
+  {
+    ostringstream oss;
+    oss << prefix << "alpha = " << best[0] << endl;
+    return oss.str();
+  }
+  
+  VectorXd boundsLower() const
+  {
+    VectorXd lower(1);
+    lower[0] = 0.0;
+    return lower;
+  }
+  
+  VectorXd boundsUpper() const
+  {
+    VectorXd upper(1);
+    upper[0] = 2.0 * M_PI;
+    return upper;
+  }
+
+private:
+};
+
+
 int main(int argc, char** argv)
 {
   // ExampleObjective obj;
-  CShearer20200502Obj obj;
-  //CShearer20200508Obj obj;
+  //CShearer20200502 obj;
+  //CShearer20200508 obj;
+  CShearer20200509 obj;
   cout << obj.status() << endl;
   
   BigDumbSolver bds(obj, 30, 0.8);
