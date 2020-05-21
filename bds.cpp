@@ -10,6 +10,8 @@
 using namespace std;
 using namespace Eigen;
 
+
+
 class Objective
 {
 public:
@@ -52,10 +54,11 @@ string Objective::status(const string& prefix) const
 class BigDumbSolver
 {
 public:
-  BigDumbSolver(const Objective& obj, int resolution = 10, double scale_factor = 0.8) :
+  BigDumbSolver(const Objective& obj, int resolution = 10, double scale_factor = 0.8, double tol = 1e-9) :
     obj_(obj),
     resolution_(resolution),
-    scale_factor_(scale_factor)
+    scale_factor_(scale_factor),
+    tol_(tol)
   {
     int num_grid_pts = pow(resolution_, obj_.dimension());
     cout << "num_grid_pts: " << num_grid_pts << endl;
@@ -72,13 +75,14 @@ private:
   const Objective& obj_;
   int resolution_;  // Number of test points per dimension in a grid.
   double scale_factor_;  // Multiply the grid size by this amount each iteration.
+  double tol_;  // Objective function must go below this to stop.
 
   vector<VectorXd> grid_;  // Persistent storage for the grid.
   vector<VectorXd> ticks_;  // Each VectorXd is resolution_ elements of tick locations.
 
   void buildGrid(const VectorXd& lower, const VectorXd& upper,
                  int resolution, vector<VectorXd>* grid_ptr, vector<VectorXd>* ticks_ptr) const;
-
+  void evaluateOnImplicitGrid(const VectorXd& lower, const VectorXd& upper, VectorXd* best_pt, double* best_val);
 };
 
 VectorXd BigDumbSolver::solve()
@@ -90,7 +94,8 @@ VectorXd BigDumbSolver::solve()
   VectorXd upper = obj_.boundsUpper();
   assert(lower.rows() == upper.rows());
   assert(lower.cols() == 1 && upper.cols() == 1);
-
+  
+  int num_evals = 0;
   double best_val = numeric_limits<double>::max();
   VectorXd best_pt = VectorXd::Ones(obj_.dimension()) * numeric_limits<double>::max();
   int iter = 0;
@@ -99,28 +104,36 @@ VectorXd BigDumbSolver::solve()
     cout << "= Iteration " << iter << endl;
     cout << "============================================================" << endl;
 
-    buildGrid(lower, upper, resolution_, &grid_, &ticks_);
-    
-    for (size_t i = 0; i < grid_.size(); ++i) {
-      double val = obj_(grid_[i]);
-      //cout << grid_[i].transpose() << " :: " << val << endl;
-      if (val < best_val) {
-        best_val = val;
-        best_pt = grid_[i];
-      }
-    }
 
-    cout << "Best value so far: " << best_val << endl;
-    cout << "Best point so far: " << best_pt.transpose() << endl;
+    evaluateOnImplicitGrid(lower, upper, &best_pt, &best_val);
+    num_evals += pow(resolution_, lower.rows());
+    
+    // buildGrid(lower, upper, resolution_, &grid_, &ticks_);
+    
+    // for (size_t i = 0; i < grid_.size(); ++i) {
+    //   double val = obj_(grid_[i]);
+    //   ++num_evals;
+    //   //cout << grid_[i].transpose() << " :: " << val << endl;
+    //   if (val < best_val) {
+    //     best_val = val;
+    //     best_pt = grid_[i];
+    //   }
+    // }
+
+    cout << "Best values so far: " << endl;
     cout << obj_.reportBest(best_pt, "  ");
+    cout << "Best value so far: " << best_val << endl;
+    //cout << "Best point so far: " << best_pt.transpose() << endl;
+    if (best_val < tol_) {
+      cout << "Optimization complete in " << num_evals << " evaluations." << endl;
+      break;
+    }
     
     // Set the new upper & lower limits.
     VectorXd range = upper - lower;
     range *= scale_factor_;
     lower = best_pt - (range / 2.0);
-    //lower = lower.cwiseMax(obj_.boundsLower());
     upper = best_pt + (range / 2.0);
-    //upper = upper.cwiseMin(obj_.boundsUpper());
 
     // If we've gone out of bounds, shift back.
     for (int i = 0; i < lower.rows(); ++i) {
@@ -141,7 +154,7 @@ VectorXd BigDumbSolver::solve()
     iter++;
   }
 
-  return VectorXd::Zero(obj_.dimension());
+  return best_pt;
 }
 
 void BigDumbSolver::buildGrid(const VectorXd& lower, const VectorXd& upper, int resolution,
@@ -166,7 +179,7 @@ void BigDumbSolver::buildGrid(const VectorXd& lower, const VectorXd& upper, int 
     for (int j = 0; j < resolution; ++j) {
       ticks[i][j] = lower[i] + j * tick_sizes[i];
     }
-    cout << "Dim " << i << " :: Ticks :: " << ticks[i].transpose() << endl;
+    //cout << "Dim " << i << " :: Ticks :: " << ticks[i].transpose() << endl;
   }
 
   // Build the grid.
@@ -190,6 +203,53 @@ void BigDumbSolver::buildGrid(const VectorXd& lower, const VectorXd& upper, int 
     }
   }
 
+}
+
+void BigDumbSolver::evaluateOnImplicitGrid(const VectorXd& lower, const VectorXd& upper, VectorXd* best_pt, double* best_val)
+{
+  int num_grid_pts = pow(resolution_, lower.rows());
+  cout << "Building grid with resolution " << resolution_
+       << " and total num points " << num_grid_pts << endl;
+  cout << "Limits:" << endl;
+  cout << "  " << lower.transpose() << endl;
+  cout << "  " << upper.transpose() << endl;
+  
+  VectorXd range = upper - lower;
+  VectorXd tick_sizes = range / resolution_;
+  
+  // Build ticks.
+  assert(ticks_.size() == obj_.dimension());
+  for (size_t i = 0; i < ticks_.size(); ++i) {
+    for (int j = 0; j < resolution_; ++j) {
+      ticks_[i][j] = lower[i] + j * tick_sizes[i];
+    }
+    //cout << "Dim " << i << " :: Ticks :: " << ticks[i].transpose() << endl;
+  }
+
+  // Iterate through the grid.
+  VectorXi indices = VectorXi::Zero(obj_.dimension());
+  VectorXi increment_every = VectorXi::Zero(obj_.dimension());
+  VectorXd pt = VectorXd::Zero(obj_.dimension());
+  
+  for (int i = 0; i < obj_.dimension(); ++i) 
+    increment_every[i] = pow(resolution_, i);
+
+  for (size_t i = 0; i < num_grid_pts; ++i) {
+    for (int j = 0; j < obj_.dimension(); ++j)
+      if (i > 0 && i % increment_every[j] == 0)
+        indices[j] = (indices[j] + 1) % resolution_;
+    
+    for (int j = 0; j < obj_.dimension(); ++j) {
+      pt[j] = ticks_[j][indices[j]];
+    }
+    
+    double val = obj_(pt);
+    if (val < *best_val) {
+      *best_val = val;
+      *best_pt = pt;
+    }
+    
+  }
 }
 
 
@@ -476,9 +536,9 @@ int main(int argc, char** argv)
 {
   // ExampleObjective obj;
   //CShearer20200502 obj;
-  //CShearer20200508 obj;
+  CShearer20200508 obj;
   //CShearer20200509 obj;
-  CShearer20200514 obj;
+  //CShearer20200514 obj;
   cout << obj.status() << endl;
   
   BigDumbSolver bds(obj, 30, 0.8);

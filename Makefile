@@ -1,5 +1,7 @@
 all: bds
 
 bds: bds.cpp
-	g++ -I $$(brew --prefix eigen)/include/eigen3/ $< -o $@
+	g++ -O3 -I $$(brew --prefix eigen)/include/eigen3/ $< -o $@
 
+clean:
+	rm bds
