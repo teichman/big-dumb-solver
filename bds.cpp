@@ -20,11 +20,10 @@ public:
   virtual VectorXd boundsUpper() const = 0;
   virtual string reportBest(const VectorXd& best, const string& prefix = "") const = 0;
 
-  int dimension() const { return boundsLower().rows(); };
+  int dimension() const { return boundsLower().rows(); }
   string status(const string& prefix = "") const;
   void check() const;
-  
-private:
+  static double equalityPenalty(double v0, double v1) { return fabs(v0 - v1); };
 };
 
 void Objective::check() const
@@ -391,12 +390,95 @@ private:
 };
 
 
+double deg2rad(double deg)
+{
+  return deg / 180.0 * M_PI;
+}
+
+double rad2deg(double rad)
+{
+  return (rad / M_PI) * 180.0;
+}
+
+// https://twitter.com/Cshearer41/status/1260847819700809728
+class CShearer20200514 : public Objective
+{
+public:
+  double cos30_;
+  double sin30_;
+  
+  CShearer20200514()
+  {
+    cos30_ = cos(deg2rad(30));
+    sin30_ = sin(deg2rad(30));
+  }
+  
+  double operator()(const VectorXd& vars) const
+  {
+    const double& rs = vars[0];
+    const double& rb = vars[1];
+
+    double val = 0;
+    val += equalityPenalty(rs + rb, cos30_);
+    val += equalityPenalty(rb / cos30_, rs / (2.0 * cos30_) + sin30_);
+    return val;
+  }
+
+  string reportBest(const VectorXd& best, const string& prefix = "") const
+  {
+    const double& rs = best[0];
+    const double& rb = best[1];
+    
+    double a = 1.0;
+    double c = rs / cos30_;
+    double e = rb / cos30_;
+    double f = a - c;
+    double parallelogram_base = f;
+    double parallelogram_height = a * cos30_;
+    double shaded = 4.0 * parallelogram_base * parallelogram_height;
+    double boxheight = 2.0 * parallelogram_height;
+    double boxwidth = f + a + a * sin30_;
+    double total = boxwidth * boxheight;
+    double frac = shaded / total;
+      
+    ostringstream oss;
+    oss << prefix << "rs = " << rs << endl;
+    oss << prefix << "rb = " << rb << endl;
+    oss << prefix << "a = " << a << endl;
+    oss << prefix << "c = " << c << endl;
+    
+    oss << prefix << "frac = " << frac << endl;
+    
+    return oss.str();
+  }
+  
+  VectorXd boundsLower() const
+  {
+    VectorXd lower(2);
+    lower[0] = 0.0;
+    lower[1] = 0.0;
+    return lower;
+  }
+  
+  VectorXd boundsUpper() const
+  {
+    VectorXd upper(2);
+    upper[0] = 1.0;
+    upper[1] = 1.0;
+    return upper;
+  }
+
+private:
+};
+
+
 int main(int argc, char** argv)
 {
   // ExampleObjective obj;
   //CShearer20200502 obj;
   //CShearer20200508 obj;
-  CShearer20200509 obj;
+  //CShearer20200509 obj;
+  CShearer20200514 obj;
   cout << obj.status() << endl;
   
   BigDumbSolver bds(obj, 30, 0.8);
