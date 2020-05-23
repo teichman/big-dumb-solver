@@ -17,10 +17,10 @@ class Objective
 public:
   Objective() {};
   
-  virtual double operator()(const VectorXd& vars) const = 0;
+  virtual double operator()(const VectorXd& vars) = 0;
   virtual VectorXd boundsLower() const = 0;
   virtual VectorXd boundsUpper() const = 0;
-  virtual string reportBest(const VectorXd& best, const string& prefix = "") const = 0;
+  virtual string reportBest(const VectorXd& best, const string& prefix = "") = 0;
 
   int dimension() const { return boundsLower().rows(); }
   string status(const string& prefix = "") const;
@@ -54,7 +54,7 @@ string Objective::status(const string& prefix) const
 class BigDumbSolver
 {
 public:
-  BigDumbSolver(const Objective& obj, int resolution = 10, double scale_factor = 0.8, double tol = 1e-9) :
+  BigDumbSolver(Objective& obj, int resolution = 10, double scale_factor = 0.8, double tol = 1e-9) :
     obj_(obj),
     resolution_(resolution),
     scale_factor_(scale_factor),
@@ -72,7 +72,7 @@ public:
   VectorXd solve();
 
 private:
-  const Objective& obj_;
+  Objective& obj_;
   int resolution_;  // Number of test points per dimension in a grid.
   double scale_factor_;  // Multiply the grid size by this amount each iteration.
   double tol_;  // Objective function must go below this to stop.
@@ -123,9 +123,9 @@ VectorXd BigDumbSolver::solve()
     cout << "Best values so far: " << endl;
     cout << obj_.reportBest(best_pt, "  ");
     cout << "Best value so far: " << best_val << endl;
-    //cout << "Best point so far: " << best_pt.transpose() << endl;
+    cout << "Num evaluations so far: " << num_evals / 1e6 << "M" << endl;
     if (best_val < tol_) {
-      cout << "Optimization complete in " << num_evals << " evaluations." << endl;
+      cout << "Optimization complete." << endl;
       break;
     }
     
@@ -208,7 +208,7 @@ void BigDumbSolver::buildGrid(const VectorXd& lower, const VectorXd& upper, int 
 void BigDumbSolver::evaluateOnImplicitGrid(const VectorXd& lower, const VectorXd& upper, VectorXd* best_pt, double* best_val)
 {
   int num_grid_pts = pow(resolution_, lower.rows());
-  cout << "Building grid with resolution " << resolution_
+  cout << "Evaluating on grid with resolution " << resolution_
        << " and total num points " << num_grid_pts << endl;
   cout << "Limits:" << endl;
   cout << "  " << lower.transpose() << endl;
@@ -255,7 +255,7 @@ void BigDumbSolver::evaluateOnImplicitGrid(const VectorXd& lower, const VectorXd
 
 class ExampleObjective : public Objective
 {
-  double operator()(const VectorXd& vars) const
+  double operator()(const VectorXd& vars)
   {
     double val = 0;
     for (int i = 0; i < vars.rows(); ++i) {
@@ -264,7 +264,7 @@ class ExampleObjective : public Objective
     return val;
   }
 
-  string reportBest(const VectorXd& best, const string& prefix = "") const
+  string reportBest(const VectorXd& best, const string& prefix = "") 
   {
     ostringstream oss;
     oss << prefix << "Best: " << best.transpose() << endl;
@@ -296,7 +296,7 @@ public:
     p1y_ = r_ * (sqrt(2.0) + 2.0) / 2.0;
   }
   
-  double operator()(const VectorXd& vars) const
+  double operator()(const VectorXd& vars) 
   {
     const double& a = vars[0];
     const double& b = vars[1];
@@ -315,7 +315,7 @@ public:
     return val;
   }
 
-  string reportBest(const VectorXd& best, const string& prefix = "") const
+  string reportBest(const VectorXd& best, const string& prefix = "") 
   {
     ostringstream oss;
     oss << prefix << "a = " << best[0] << endl;
@@ -360,7 +360,7 @@ public:
   {
   }
   
-  double operator()(const VectorXd& vars) const
+  double operator()(const VectorXd& vars) 
   {
     const double& r = vars[0];
     const double& h = vars[1];
@@ -375,7 +375,7 @@ public:
     return val;
   }
 
-  string reportBest(const VectorXd& best, const string& prefix = "") const
+  string reportBest(const VectorXd& best, const string& prefix = "") 
   {
     ostringstream oss;
     oss << prefix << "r = " << best[0] << endl;
@@ -416,7 +416,7 @@ public:
   {
   }
   
-  double operator()(const VectorXd& vars) const
+  double operator()(const VectorXd& vars) 
   {
     const double& alpha = vars[0];
     
@@ -425,7 +425,7 @@ public:
     return val;
   }
 
-  string reportBest(const VectorXd& best, const string& prefix = "") const
+  string reportBest(const VectorXd& best, const string& prefix = "") 
   {
     ostringstream oss;
     oss << prefix << "alpha = " << best[0] << endl;
@@ -473,7 +473,7 @@ public:
     sin30_ = sin(deg2rad(30));
   }
   
-  double operator()(const VectorXd& vars) const
+  double operator()(const VectorXd& vars) 
   {
     const double& rs = vars[0];
     const double& rb = vars[1];
@@ -484,7 +484,7 @@ public:
     return val;
   }
 
-  string reportBest(const VectorXd& best, const string& prefix = "") const
+  string reportBest(const VectorXd& best, const string& prefix = "") 
   {
     const double& rs = best[0];
     const double& rb = best[1];
@@ -531,17 +531,130 @@ public:
 private:
 };
 
+class CShearer20200523 : public Objective
+{
+public:
+  double a_;
+  double b_;
+  double alpha_;
+  double beta_;
+  double c_;
+  double d_;
+  double area_;
+  
+  CShearer20200523()
+  {
+  }
+
+  void compute(const VectorXd& vars)
+  {
+    a_ = vars[0];
+    b_ = vars[1];
+    alpha_ = vars[2];
+    beta_ = vars[3];
+
+    c_ = sqrt(b_*b_ - a_*a_);
+    d_ = c_ / sin(alpha_);
+  }
+  
+  double operator()(const VectorXd& vars)
+  {
+    compute(vars);
+    
+    double val = 0;
+    val += equalityPenalty(a_, b_ * cos(beta_));
+    val += equalityPenalty(c_, b_ * sin(beta_));
+    val += equalityPenalty(tan(alpha_), c_ / (2 * a_ + c_));
+
+    double t0 = a_ + b_ * cos(beta_);
+    double t1 = b_ * sin(beta_);
+    val += equalityPenalty(36.0, t0 * t0 + t1 * t1);
+
+    val += equalityPenalty(36.0, 4*a_*a_ + c_*c_);
+    
+    // val += equalityPenalty(d_ * cos(alpha_), 2 * a_ + c_);
+    // val += equalityPenalty(d_*d_, (2.0 * a_ + c_) * (2.0 * a_ + c_) + c_*c_);
+    
+    // c should be smaller than a.
+    // But this probably indicates I haven't pinned down the problem yet.
+    // I really need to detect multiple solutions...
+    //val += max<double>(0, c_ - a_);  
+    
+    return val;
+  }
+
+  string reportBest(const VectorXd& best, const string& prefix = "")
+  {
+    compute(best);
+
+    double gamma = atan2(b_ * sin(beta_), a_ + b_ * cos(beta_));
+
+    // area is two squares plus two of /Delta_b minus the big long triangle on the bottom.
+    area_ = (b_*b_ + a_*a_) + (c_ * a_) - (c_ * (2 * a_ + c_) / 2.0);
+    
+    ostringstream oss;
+    oss << prefix << "a = " << a_ << endl;
+    oss << prefix << "b = " << b_ << endl;
+    oss << prefix << "c = " << c_ << endl;
+    oss << prefix << "d = " << d_ << endl;
+    oss << prefix << "alpha = " << alpha_ << " or " << rad2deg(alpha_) << " deg" << endl;
+    oss << prefix << "beta = " << beta_ << " or " << rad2deg(beta_) << " deg" << endl;
+    oss << prefix << "gamma = " << gamma << " or " << rad2deg(gamma) << " deg" << endl;
+    oss << prefix << "area = " << area_ << endl;
+    
+    return oss.str();
+  }
+  
+  VectorXd boundsLower() const
+  {
+    VectorXd lower(4);
+    lower[0] = 0.1;  // This is what prevents it from saying the two squares are identical and tangent.
+    lower[1] = 0.1;
+    lower[2] = 0.0;
+    lower[3] = 0.0;
+    return lower;
+  }
+  
+  VectorXd boundsUpper() const
+  {
+    VectorXd upper(4);
+    upper[0] = 6.0;
+    upper[1] = 6.0;
+    upper[2] = M_PI / 2.0;
+    upper[3] = M_PI / 2.0;
+    return upper;
+  }
+
+private:
+};
+
+
+// TODO: Proper test infrastructure.
+void test()
+{
+  CShearer20200523 obj;
+  BigDumbSolver bds(obj, 10, 0.5);
+  bds.solve();
+  double tol = 1e-6;
+  assert(fabs(obj.area_ - 18.0) < tol);
+  cout << "Tests complete." << endl;
+  exit(0);
+}
+
 
 int main(int argc, char** argv)
 {
+  //test();
+
   // ExampleObjective obj;
   //CShearer20200502 obj;
-  CShearer20200508 obj;
+  //CShearer20200508 obj;
   //CShearer20200509 obj;
   //CShearer20200514 obj;
+  CShearer20200523 obj;
   cout << obj.status() << endl;
   
-  BigDumbSolver bds(obj, 30, 0.8);
+  BigDumbSolver bds(obj, 10, 0.5);
   bds.solve();
   return 0;
 }

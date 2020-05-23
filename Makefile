@@ -5,3 +5,7 @@ bds: bds.cpp
 
 clean:
 	rm bds
+
+test: bds.cpp
+	g++ -I $$(brew --prefix eigen)/include/eigen3/ $< -o bds_test
+	./bds_test
