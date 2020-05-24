@@ -54,11 +54,12 @@ string Objective::status(const string& prefix) const
 class BigDumbSolver
 {
 public:
+  
   BigDumbSolver(Objective& obj, int resolution = 10, double scale_factor = 0.8, double tol = 1e-9) :
     obj_(obj),
     resolution_(resolution),
     scale_factor_(scale_factor),
-    tol_(tol)
+    tol_(tol)    
   {
     int num_grid_pts = pow(resolution_, obj_.dimension());
     cout << "num_grid_pts: " << num_grid_pts << endl;
@@ -104,7 +105,6 @@ VectorXd BigDumbSolver::solve()
     cout << "= Iteration " << iter << endl;
     cout << "============================================================" << endl;
 
-
     evaluateOnImplicitGrid(lower, upper, &best_pt, &best_val);
     num_evals += pow(resolution_, lower.rows());
     
@@ -120,12 +120,15 @@ VectorXd BigDumbSolver::solve()
     //   }
     // }
 
+
     cout << "Best values so far: " << endl;
     cout << obj_.reportBest(best_pt, "  ");
     cout << "Best value so far: " << best_val << endl;
     cout << "Num evaluations so far: " << num_evals / 1e6 << "M" << endl;
+    
     if (best_val < tol_) {
       cout << "Optimization complete." << endl;
+      obj_(best_pt);
       break;
     }
     
@@ -208,6 +211,7 @@ void BigDumbSolver::buildGrid(const VectorXd& lower, const VectorXd& upper, int 
 void BigDumbSolver::evaluateOnImplicitGrid(const VectorXd& lower, const VectorXd& upper, VectorXd* best_pt, double* best_val)
 {
   int num_grid_pts = pow(resolution_, lower.rows());
+
   cout << "Evaluating on grid with resolution " << resolution_
        << " and total num points " << num_grid_pts << endl;
   cout << "Limits:" << endl;
@@ -628,15 +632,95 @@ public:
 private:
 };
 
+class CShearer20200430 : public Objective
+{
+public:
+  double a_;
+  double rb_;
+  double rs_;
+  double alpha_;
+  double frac_;
+  
+  CShearer20200430()
+  {
+  }
+
+  void compute(const VectorXd& vars)
+  {
+    rb_ = 1.0;
+    
+    a_ = vars[0];
+    rs_ = vars[1];
+    alpha_ = vars[2];
+  }
+  
+  double operator()(const VectorXd& vars)
+  {
+    compute(vars);
+    
+    double val = 0;
+    val += equalityPenalty(rs_*rs_ + a_*a_, 4.0 * rs_*rs_);
+    val += equalityPenalty(rs_*rs_ + a_*a_ / 4.0, 1.0);
+    val += equalityPenalty(sin(alpha_), rs_);
+    val += equalityPenalty(cos(alpha_), a_ / 2.0);
+    return val;
+  }
+
+  string reportBest(const VectorXd& best, const string& prefix = "")
+  {
+    compute(best);
+
+    frac_ = rs_*rs_;
+    
+    ostringstream oss;
+    oss << prefix << "a = " << a_ << endl;
+    oss << prefix << "rs = " << rs_ << endl;
+    oss << prefix << "rb = " << rb_ << endl;
+    oss << prefix << "alpha = " << alpha_ << " or " << rad2deg(alpha_) << " deg" << endl;
+    oss << prefix << "frac = " << frac_ << endl;
+    return oss.str();
+  }
+  
+  VectorXd boundsLower() const
+  {
+    VectorXd lower(3);
+    lower[0] = 0.0;
+    lower[1] = 0.0;
+    lower[2] = 0.0;
+    return lower;
+  }
+  
+  VectorXd boundsUpper() const
+  {
+    VectorXd upper(3);
+    upper[0] = 2.0;
+    upper[1] = 1.0;
+    upper[2] = M_PI / 2.0;
+    return upper;
+  }
+
+private:
+};
 
 // TODO: Proper test infrastructure.
 void test()
 {
-  CShearer20200523 obj;
-  BigDumbSolver bds(obj, 10, 0.5);
-  bds.solve();
   double tol = 1e-6;
-  assert(fabs(obj.area_ - 18.0) < tol);
+  
+  { 
+    CShearer20200523 obj;
+    BigDumbSolver bds(obj, 10, 0.5);
+    bds.solve();
+    assert(fabs(obj.area_ - 18.0) < tol);
+  }
+
+  {
+    CShearer20200430 obj;
+    BigDumbSolver bds(obj, 30, 0.75);
+    bds.solve();
+    assert(fabs(obj.frac_ - 4.0/7.0) < tol);
+  }
+  
   cout << "Tests complete." << endl;
   exit(0);
 }
@@ -644,17 +728,18 @@ void test()
 
 int main(int argc, char** argv)
 {
-  //test();
+  test();
 
   // ExampleObjective obj;
   //CShearer20200502 obj;
   //CShearer20200508 obj;
   //CShearer20200509 obj;
   //CShearer20200514 obj;
-  CShearer20200523 obj;
+  //CShearer20200523 obj;
+  CShearer20200430 obj;
   cout << obj.status() << endl;
   
-  BigDumbSolver bds(obj, 10, 0.5);
+  BigDumbSolver bds(obj, 30, 0.75);
   bds.solve();
   return 0;
 }
