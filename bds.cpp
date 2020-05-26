@@ -37,9 +37,11 @@ VectorXd BigDumbSolver::solve()
   VectorXd best_pt = VectorXd::Ones(obj_.dimension()) * numeric_limits<double>::max();
   int iter = 0;
   while (true) {
-    cout << "============================================================" << endl;
-    cout << "= Iteration " << iter << endl;
-    cout << "============================================================" << endl;
+    if (!quiet_) {
+      cout << "============================================================" << endl;
+      cout << "= Iteration " << iter << endl;
+      cout << "============================================================" << endl;
+    }
 
     evaluateOnImplicitGrid(lower, upper, &best_pt, &best_val);
     num_evals += pow(resolution_, lower.rows());
@@ -55,12 +57,13 @@ VectorXd BigDumbSolver::solve()
     //     best_pt = grid_[i];
     //   }
     // }
-
-
-    cout << "Best values so far: " << endl;
-    cout << obj_.reportBest(best_pt, "  ");
-    cout << "Best value so far: " << best_val << endl;
-    cout << "Num evaluations so far: " << num_evals / 1e6 << "M" << endl;
+    
+    if (!quiet_) {
+      cout << "Best values so far: " << endl;
+      cout << obj_.reportBest(best_pt, "  ");  
+      cout << "Best value so far: " << best_val << endl;
+      cout << "Num evaluations so far: " << num_evals / 1e6 << "M" << endl;
+    }
     
     if (best_val < tol_) {
       cout << "Optimization complete." << endl;
@@ -103,11 +106,13 @@ void BigDumbSolver::buildGrid(const VectorXd& lower, const VectorXd& upper, int 
   vector<VectorXd>& grid = *grid_ptr;
   
   int num_grid_pts = pow(resolution_, lower.rows());
-  cout << "Building grid with resolution " << resolution
-       << " and total num points " << num_grid_pts << endl;
-  cout << "Limits:" << endl;
-  cout << "  " << lower.transpose() << endl;
-  cout << "  " << upper.transpose() << endl;
+  if (!quiet_) {
+    cout << "Building grid with resolution " << resolution
+         << " and total num points " << num_grid_pts << endl;
+    cout << "Limits:" << endl;
+    cout << "  " << lower.transpose() << endl;
+    cout << "  " << upper.transpose() << endl;
+  }
   
   VectorXd range = upper - lower;
   VectorXd tick_sizes = range / resolution;
@@ -148,11 +153,13 @@ void BigDumbSolver::evaluateOnImplicitGrid(const VectorXd& lower, const VectorXd
 {
   int num_grid_pts = pow(resolution_, lower.rows());
 
-  cout << "Evaluating on grid with resolution " << resolution_
-       << " and total num points " << num_grid_pts << endl;
-  cout << "Limits:" << endl;
-  cout << "  " << lower.transpose() << endl;
-  cout << "  " << upper.transpose() << endl;
+  if (!quiet_) {
+    cout << "Evaluating on grid with resolution " << resolution_
+         << " and total num points " << num_grid_pts << endl;
+    cout << "Limits:" << endl;
+    cout << "  " << lower.transpose() << endl;
+    cout << "  " << upper.transpose() << endl;
+  }
   
   VectorXd range = upper - lower;
   VectorXd tick_sizes = range / resolution_;

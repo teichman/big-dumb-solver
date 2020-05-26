@@ -309,10 +309,9 @@ public:
     compute(best);
 
     double gamma = atan2(b_ * sin(beta_), a_ + b_ * cos(beta_));
-
     // area is two squares plus two of /Delta_b minus the big long triangle on the bottom.
     area_ = (b_*b_ + a_*a_) + (c_ * a_) - (c_ * (2 * a_ + c_) / 2.0);
-    
+
     ostringstream oss;
     oss << prefix << "a = " << a_ << endl;
     oss << prefix << "b = " << b_ << endl;
@@ -426,34 +425,27 @@ TEST_CASE("doctest::Approx")
   CHECK(1e-4 != doctest::Approx(0.0));
 }
 
+
 TEST_CASE("CShearer20200523")
 {
   CShearer20200523 obj;
   BigDumbSolver bds(obj, 10, 0.5);
-  bds.solve();
+  bds.quiet_ = true;
+  VectorXd pt = bds.solve();
+  cout << "Best: " << endl;
+  cout << obj.reportBest(pt, "  ");
   CHECK(obj.area_ == doctest::Approx(18.0));
 }
 
-// TODO: Proper test infrastructure.
-// void test()
-// {
-//   double tol = 1e-6;
-  
-//   { 
-//     CShearer20200523 obj;
-//     BigDumbSolver bds(obj, 10, 0.5);
-//     bds.solve();
-//     assert(fabs(obj.area_ - 18.0) < tol);
-//   }
 
-//   {
-//     CShearer20200430 obj;
-//     BigDumbSolver bds(obj, 30, 0.75);
-//     bds.solve();
-//     assert(fabs(obj.frac_ - 4.0/7.0) < tol);
-//   }
-  
-//   cout << "Tests complete." << endl;
-//   exit(0);
-// }
+TEST_CASE("CShearer20200430")
+{
+    CShearer20200430 obj;
+    BigDumbSolver bds(obj, 30, 0.75);
+    bds.quiet_ = true;
+    VectorXd pt = bds.solve();
+    cout << "Best: " << endl;
+    cout << obj.reportBest(pt, "  ");
+    CHECK(obj.frac_ == doctest::Approx(4.0/7.0));
+}
 

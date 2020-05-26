@@ -32,8 +32,10 @@ public:
 class BigDumbSolver
 {
 public:
+  bool quiet_;
   
   BigDumbSolver(Objective& obj, int resolution = 10, double scale_factor = 0.8, double tol = 1e-9) :
+    quiet_(false),
     obj_(obj),
     resolution_(resolution),
     scale_factor_(scale_factor),
