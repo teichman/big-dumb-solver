@@ -440,12 +440,12 @@ TEST_CASE("CShearer20200523")
 
 TEST_CASE("CShearer20200430")
 {
-    CShearer20200430 obj;
-    BigDumbSolver bds(obj, 30, 0.75);
-    bds.quiet_ = true;
-    VectorXd pt = bds.solve();
-    cout << "Best: " << endl;
-    cout << obj.reportBest(pt, "  ");
-    CHECK(obj.frac_ == doctest::Approx(4.0/7.0));
+  CShearer20200430 obj;
+  BigDumbSolver bds(obj, 30, 0.75);
+  bds.quiet_ = true;
+  VectorXd pt = bds.solve();
+  cout << "Best: " << endl;
+  cout << obj.reportBest(pt, "  ");
+  CHECK(obj.frac_ == doctest::Approx(4.0/7.0));
 }
 
