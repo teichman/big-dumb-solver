@@ -46,18 +46,6 @@ VectorXd BigDumbSolver::solve()
     evaluateOnImplicitGrid(lower, upper, &best_pt, &best_val);
     num_evals += pow(resolution_, lower.rows());
     
-    // buildGrid(lower, upper, resolution_, &grid_, &ticks_);
-    
-    // for (size_t i = 0; i < grid_.size(); ++i) {
-    //   double val = obj_(grid_[i]);
-    //   ++num_evals;
-    //   //cout << grid_[i].transpose() << " :: " << val << endl;
-    //   if (val < best_val) {
-    //     best_val = val;
-    //     best_pt = grid_[i];
-    //   }
-    // }
-    
     if (!quiet_) {
       cout << "Best values so far: " << endl;
       cout << obj_.reportBest(best_pt, "  ");  
@@ -99,55 +87,6 @@ VectorXd BigDumbSolver::solve()
   return best_pt;
 }
 
-void BigDumbSolver::buildGrid(const VectorXd& lower, const VectorXd& upper, int resolution,
-                              vector<VectorXd>* grid_ptr, vector<VectorXd>* ticks_ptr) const
-{
-  vector<VectorXd>& ticks = *ticks_ptr;
-  vector<VectorXd>& grid = *grid_ptr;
-  
-  int num_grid_pts = pow(resolution_, lower.rows());
-  if (!quiet_) {
-    cout << "Building grid with resolution " << resolution
-         << " and total num points " << num_grid_pts << endl;
-    cout << "Limits:" << endl;
-    cout << "  " << lower.transpose() << endl;
-    cout << "  " << upper.transpose() << endl;
-  }
-  
-  VectorXd range = upper - lower;
-  VectorXd tick_sizes = range / resolution;
-  
-  // Build ticks.
-  assert(ticks.size() == obj_.dimension());
-  for (size_t i = 0; i < ticks.size(); ++i) {
-    for (int j = 0; j < resolution; ++j) {
-      ticks[i][j] = lower[i] + j * tick_sizes[i];
-    }
-    //cout << "Dim " << i << " :: Ticks :: " << ticks[i].transpose() << endl;
-  }
-
-  // Build the grid.
-  VectorXi indices = VectorXi::Zero(obj_.dimension());
-  VectorXi increment_every = VectorXi::Zero(obj_.dimension());
-  for (int i = 0; i < obj_.dimension(); ++i) 
-    increment_every[i] = pow(resolution, i);
-
-  // cout << "indices: " << indices.transpose() << endl;
-  // cout << "increment_every: " << increment_every.transpose() << endl;
-
-  for (size_t i = 0; i < grid.size(); ++i) {
-    for (int j = 0; j < obj_.dimension(); ++j)
-      if (i > 0 && i % increment_every[j] == 0)
-        indices[j] = (indices[j] + 1) % resolution;
-    
-    //cout << "indices: " << indices.transpose() << endl;
-    for (int j = 0; j < obj_.dimension(); ++j) {
-      assert(grid[i].rows() == obj_.dimension());
-      grid[i][j] = ticks[j][indices[j]];
-    }
-  }
-
-}
 
 void BigDumbSolver::evaluateOnImplicitGrid(const VectorXd& lower, const VectorXd& upper, VectorXd* best_pt, double* best_val)
 {
