@@ -1,11 +1,15 @@
-all: bds
 
-bds: bds.cpp
-	g++ -O3 -I $$(brew --prefix eigen)/include/eigen3/ $< -o $@
+
+solve: solve.cpp bds.cpp 
+	g++ -std=c++14 -O3 -I $$(brew --prefix eigen)/include/eigen3/ $^ -o $@
+
+test: test.cpp bds.cpp
+	g++ -std=c++14 -O3 -I $$(brew --prefix eigen)/include/eigen3/ $^ -o $@
+	./test
+
+
+.PHONY: clean test
 
 clean:
-	rm bds
+	rm -f solve test
 
-test: bds.cpp
-	g++ -I $$(brew --prefix eigen)/include/eigen3/ $< -o bds_test
-	./bds_test
