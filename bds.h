@@ -1,3 +1,5 @@
+#pragma once
+
 #include <Eigen/Eigen>
 #include <iostream>
 #include <sstream>
@@ -67,3 +69,16 @@ private:
   void evaluateOnImplicitGrid(const Eigen::VectorXd& lower, const Eigen::VectorXd& upper,
                               Eigen::VectorXd* best_pt, double* best_val);
 };
+
+
+
+inline double deg2rad(double deg)
+{
+  return deg / 180.0 * M_PI;
+}
+
+inline double rad2deg(double rad)
+{
+  return (rad / M_PI) * 180.0;
+}
+
