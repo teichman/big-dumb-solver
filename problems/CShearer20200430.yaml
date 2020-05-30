@@ -1,0 +1,22 @@
+optimization_params:
+  resolution: 30
+  shrinkage: 0.75
+
+optimization_variables:
+  a: [0.0, 2.0]
+  rs: [0.0, 1.0]
+  alpha: [0.0, M_PI / 2.0]
+  
+derived_variables:
+  rb: 1.0
+  frac: rs*rs
+
+constraints:
+  - 'rs*rs + a*a == 4.0 * rs*rs'
+  - 'rs*rs + a*a / 4.0 == 1.0'
+  - 'sin(alpha) == rs'
+  - 'cos(alpha) == a / 2.0'
+
+tests:
+  - 'frac == 4.0 / 7.0'
+  

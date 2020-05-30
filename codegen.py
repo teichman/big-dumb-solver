@@ -38,7 +38,7 @@ def run():
   for constraint in config['constraints']:
     lhs = constraint.split(' == ')[0]
     rhs = constraint.split(' == ')[1]
-    constraints += '    equalityPenalty({}, {});\n'.format(lhs, rhs)
+    constraints += '    val += equalityPenalty({}, {});\n'.format(lhs, rhs)
   cpp = cpp.replace('    // SET_CONSTRAINTS', constraints[:-1])
 
   # Status
@@ -58,14 +58,30 @@ def run():
   for idx, var in enumerate(opt_vars.keys()):
     upper += '    upper[{}] = {};\n'.format(idx, opt_vars[var][1])
   cpp = cpp.replace('    // UPPER_BOUNDS', upper[:-1])    
-  
-  print(cpp)
+
+  # Tests
+  tests = ''
+  if 'tests' in config.keys():
+    for test in config['tests']:
+      lhs = test.split(' == ')[0]
+      rhs = test.split(' == ')[1]
+      tol = 1e-6
+      tests += '  assert(fabs(obj.{} - ({})) < {});\n'.format(lhs, rhs, tol)
+    tests += '  cout << "Tests passed." << endl;\n'
+    cpp = cpp.replace('  // TESTS', tests[:-1])      
   
 
+  if args.output == '':
+    args.output = 'generated/{}.cpp'.format(name)
+  with open(args.output, "w") as file:
+    file.write(cpp)
+  print("Wrote output to {}.".format(args.output))
+  
 if __name__ == '__main__':
   parser = argparse.ArgumentParser()
   parser.add_argument("config", help="yaml file specifying the optimization problem")
   parser.add_argument("-t", "--template", type=str, default='bds_template.cpp', help='')
+  parser.add_argument("-o", "--output", type=str, default='', help='Defaults to generated/NAME.cpp')
   args = parser.parse_args()
 
   run()

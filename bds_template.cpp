@@ -1,3 +1,9 @@
+#include <bds.h>
+
+using namespace Eigen;
+using namespace std;
+
+
 class OBJECTIVE_TEMPLATE : public Objective
 {
 public:
@@ -31,3 +37,14 @@ public:
     return upper;
   }
 };
+
+
+int main(int argc, char** argv)
+{
+  OBJECTIVE_TEMPLATE obj;
+  BigDumbSolver bds(obj, 30, 0.75);
+  bds.solve();
+
+  // TESTS
+}
+

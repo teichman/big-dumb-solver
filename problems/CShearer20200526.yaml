@@ -14,7 +14,7 @@ derived_variables:
   a0: s / sin(alpha)
   a1: s * cos(alpha)
   b0: s * sin(alpha)
-  b1: s / cos(alpha));
+  b1: s / cos(alpha)
   shaded: 2
   rect: a*b
   frac: shaded / rect
