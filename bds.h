@@ -17,8 +17,7 @@ public:
   virtual double operator()(const Eigen::VectorXd& vars) = 0;
   virtual Eigen::VectorXd boundsLower() const = 0;
   virtual Eigen::VectorXd boundsUpper() const = 0;
-  virtual std::string reportBest(const Eigen::VectorXd& best,
-                                 const std::string& prefix = "") = 0;
+  virtual std::string status(const std::string& prefix = "") = 0;
 
   int dimension() const { return boundsLower().rows(); }
   std::string status(const std::string& prefix = "") const;
@@ -44,7 +43,7 @@ public:
     tol_(tol)    
   {
     int num_grid_pts = pow(resolution_, obj_.dimension());
-    std::cout << "num_grid_pts: " << num_grid_pts << std::endl;
+    //std::cout << "num_grid_pts: " << num_grid_pts << std::endl;
     grid_.resize(num_grid_pts, Eigen::VectorXd::Zero(obj_.dimension()));
 
     ticks_.resize(obj_.dimension());

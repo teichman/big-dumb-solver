@@ -48,13 +48,14 @@ VectorXd BigDumbSolver::solve()
     
     if (!quiet_) {
       cout << "Best values so far: " << endl;
-      cout << obj_.reportBest(best_pt, "  ");  
+      obj_(best_pt);
+      cout << obj_.status("  ");  
       cout << "Best value so far: " << best_val << endl;
       cout << "Num evaluations so far: " << num_evals / 1e6 << "M" << endl;
     }
     
     if (best_val < tol_) {
-      cout << "Optimization complete." << endl;
+      if (!quiet_) cout << "Optimization complete." << endl;
       obj_(best_pt);
       break;
     }
