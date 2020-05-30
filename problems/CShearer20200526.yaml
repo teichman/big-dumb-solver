@@ -1,0 +1,28 @@
+optimization_params:
+  resolution: 30
+  shrinkage: 0.75
+
+optimization_variables:
+  r: [0.1, 1.0]
+  alpha: [0.0, M_PI / 2.0]
+  
+derived_variables:
+  s: 1.0
+  d: 3*r + 2*s
+  a: d * cos(alpha)
+  b: d * sin(alpha)
+  a0: s / sin(alpha)
+  a1: s * cos(alpha)
+  b0: s * sin(alpha)
+  b1: s / cos(alpha));
+  shaded: 2
+  rect: a*b
+  frac: shaded / rect
+
+constraints:
+  - 'a*a + b*b == d*d'
+  - 'b == s*sin(alpha) + s/cos(alpha)'
+  - 'a == (3*r + 2*s)*cos(alpha)'
+  - 'a0*a0 == s*s + pow(2*r + s, 2)'
+  - 's*s == a1*a1 + b0*b0'
+  - 'r*r + s*s == b1*b1'
