@@ -8,7 +8,6 @@ optimization_variables:
   alpha: [0.0, M_PI / 2.0]
   
 derived_variables:
-  rb: 1.0
   frac: rs*rs
 
 constraints:
