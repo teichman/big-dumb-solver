@@ -42,7 +42,7 @@ public:
 int main(int argc, char** argv)
 {
   OBJECTIVE_TEMPLATE obj;
-  BigDumbSolver bds(obj, 30, 0.75);
+  BigDumbSolver bds(obj, PARAMS);
   bds.solve();
 
   // TESTS

@@ -60,8 +60,8 @@ def run():
   cpp = cpp.replace('    // UPPER_BOUNDS', upper[:-1])    
 
   # Tests
-  tests = ''
   if 'tests' in config.keys():
+    tests = ''
     for test in config['tests']:
       lhs = test.split(' == ')[0]
       rhs = test.split(' == ')[1]
@@ -69,7 +69,15 @@ def run():
       tests += '  assert(fabs(obj.{} - ({})) < {});\n'.format(lhs, rhs, tol)
     tests += '  cout << "Tests passed." << endl;\n'
     cpp = cpp.replace('  // TESTS', tests[:-1])      
-  
+
+  # Optimization params
+  resolution = 30
+  shrinkage = 0.75
+  if 'optimization_params' in config.keys():
+    params = ''
+    resolution = config['optimization_params']['resolution']
+    shrinkage = config['optimization_params']['shrinkage']
+  cpp = cpp.replace('PARAMS', '{}, {}'.format(resolution, shrinkage))
 
   if args.output == '':
     args.output = 'generated/{}.cpp'.format(name)
