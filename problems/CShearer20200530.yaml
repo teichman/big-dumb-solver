@@ -1,0 +1,16 @@
+optimization_params:
+  resolution: 30
+  shrinkage: 0.75
+
+optimization_variables:
+  rb: [0.0, 3.0]
+  
+derived_variables:
+  frac: 4 / (rb*rb)
+  
+constraints:
+  - 'rb == 2*cos(deg2rad(30)) + tan(deg2rad(30))'
+
+tests:
+  - 'frac == 3.0 / 4.0'
+  

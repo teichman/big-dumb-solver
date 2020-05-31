@@ -1,5 +1,10 @@
 #!/bin/bash
 
+if [ $# -ne 1 ]; then
+    echo "Usage: ./solve.sh YAML_CONFIG"
+    exit 0
+fi
+
 CONFIG=$1
 NAME=$(basename ${CONFIG%.yaml})
 CPP=generated/$NAME.cpp
