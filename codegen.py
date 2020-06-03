@@ -44,7 +44,7 @@ def run():
   # Status
   status = ''
   for var in all_vars:
-    status += '    oss << prefix << "{} = " << {} << endl;\n'.format(var, var)
+    status += '    oss << prefix << std::setprecision(12) << "{} = " << {} << endl;\n'.format(var, var)
   cpp = cpp.replace('    // PRINT_STATUS', status[:-1])
 
   # Lower bounds

@@ -1,0 +1,21 @@
+# https://twitter.com/Cshearer41/status/1267062824037158912
+
+optimization_params:
+  resolution: 30
+  shrinkage: 0.75
+
+optimization_variables:
+  a: [0.0, 5.0]
+  
+derived_variables:
+  b: a + 2
+  c: b + 1
+  r: sqrt(c * c + 3)
+  area: M_PI * r * r /  4.0
+  
+constraints:
+  - r == sqrt(b*b + 12)
+
+tests:
+  - area == 7 * M_PI
+  

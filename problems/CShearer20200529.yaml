@@ -1,0 +1,23 @@
+optimization_params:
+  resolution: 30
+  shrinkage: 0.75
+
+optimization_variables:
+  r0: [0, 1.0]
+  r1: [0, 1.0]
+  alpha: [0, M_PI / 2]
+  
+derived_variables:
+  r3: 1
+  r2: r0 + r1
+  frac: (r0*r0 + r1*r1 + r2*r2) / (r3*r3)
+  
+constraints:
+  - r0 + r2 == (r1 + r2) * cos(alpha)
+  - r2 == (r1 + r2) * sin(alpha)
+  - (r1+r2)*(r1+r2) == r2*r2 + (r2+r0)*(r2+r0)
+  - r3 == r1 + r2
+
+tests:
+  - frac == 14 / 25.0
+  
