@@ -1,0 +1,20 @@
+# https://twitter.com/Cshearer41/status/1252561953064726528
+
+optimization_params:
+  resolution: 30
+  shrinkage: 0.75
+
+optimization_variables:
+  r2: [8, 12]  # Answer remains unchanged for any lower limit here in [6, 12).
+  
+derived_variables:
+  r0: 12 - r2
+  r1: (r2 - r0) / 2
+  area: (M_PI / 2) * (r2 * r2 / 2 + r0 * r0 / 2 - r1 * r1)
+  
+constraints:
+  - r2 == r2
+
+tests:
+  - area == 18 * M_PI
+  
