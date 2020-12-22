@@ -1,0 +1,20 @@
+# https://twitter.com/Cshearer41/status/1338053212373471232
+
+optimization_params:
+  resolution: 30
+  shrinkage: 0.75
+
+optimization_variables:
+  a: [0.0, 5.0]
+  b: [0.0, 5.0]
+  
+derived_variables:
+  area: 2.0 * a * a 
+  
+constraints:
+  - 2.0 * a * a + b * b == 25
+  - b == sqrt(2) / 2.0 * a
+
+tests:
+  - area == 20.0
+  
