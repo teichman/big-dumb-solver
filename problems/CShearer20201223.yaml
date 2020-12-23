@@ -1,0 +1,18 @@
+# https://twitter.com/Cshearer41/status/1341736835140206595
+
+optimization_params:
+  resolution: 30
+  shrinkage: 0.75
+
+optimization_variables:
+  a: [0.0, 5.0]
+  b: [0.0, 5.0]
+  alpha: [0, M_PI / 2.0]
+  
+derived_variables:
+  area: 4.0 * a * a
+  
+constraints:
+  - a * cos(alpha) == b
+  - 4.0 * a * sin(alpha) == 13.0 + b
+  - a * sin(alpha) + 4.0 * a * cos(alpha) == 13.0 + b
